@@ -55,6 +55,7 @@
 #include <memory>
 #include <tuple>
 #include <type_traits>
+#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -508,13 +509,21 @@ public:
             AM, IR, std::tuple<ExtraArgTs...>(ExtraArgs...));
 
     for (auto &Pass : Passes) {
+      auto Tjj = Pass->name().str();
+      printf("before %s:\n", Tjj.c_str()); // by tjj
+      usleep(10);                          // by tjj
       // Check the PassInstrumentation's BeforePass callbacks before running the
       // pass, skip its execution completely if asked to (callback returns
       // false).
       if (!PI.runBeforePass<IRUnitT>(*Pass, IR))
         continue;
 
+      IR.dump(); // by tjj
       PreservedAnalyses PassPA = Pass->run(IR, AM, ExtraArgs...);
+      usleep(10);                                        // by tjj
+      printf("after %s:\n", Pass->name().str().c_str()); // by tjj
+      usleep(10);                                        // by tjj
+      IR.dump();                                         // by tjj
 
       // Call onto PassInstrumentation's AfterPass callbacks immediately after
       // running the pass.
