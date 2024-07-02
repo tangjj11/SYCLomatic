@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "QueryAPIMapping.h"
+#include "MapNames.h"
 #include "llvm/Support/raw_ostream.h"
 #include <unordered_map>
 
@@ -22,7 +23,7 @@ void APIMapping::registerEntry(std::string Name, llvm::StringRef SourceCode) {
   std::replace(Name.begin(), Name.end(), '$', ':');
   if (getPrintAll()) {
     EntrySet.insert(Name);
-    return;
+    // return;
   }
   const auto TargetIndex = EntryArray.size();
   EntryMap[Name] = TargetIndex; // Set the entry whether it exist or not.
@@ -77,8 +78,13 @@ llvm::StringRef APIMapping::getAPISourceCode(std::string Key) {
 }
 
 void APIMapping::printAll() {
-  for (const auto &Name : EntrySet)
-    llvm::outs() << Name << "\n";
+  // for (const auto &Name : EntrySet)
+  //   llvm::outs() << Name << "\n";
+  int i = 100000;
+  for (const auto &Name : MigrationStatistics::GetAllAPINames()) {
+    if (MigrationStatistics::IsMigrated(Name) && EntryMap.count(Name) == 0)
+      llvm::outs() << i++ << ": " << Name << "\n";
+  }
 }
 
 } // namespace dpct

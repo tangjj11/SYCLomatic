@@ -216,10 +216,13 @@
 // ATOMICCAS-NEXT:   atomicCAS(pu /*unsigned **/, u1 /*unsigned*/, u2 /*unsigned*/);
 // ATOMICCAS-NEXT:   atomicCAS(pull /*unsigned long long **/, ull1 /*unsigned long long*/,
 // ATOMICCAS-NEXT:             ull2 /*unsigned long long*/);
+// ATOMICCAS-NEXT:   atomicCAS(pus /*unsigned short **/, us1 /*unsigned short*/,
+// ATOMICCAS-NEXT:             us2 /*unsigned short*/);
 // ATOMICCAS-NEXT: Is migrated to:
 // ATOMICCAS-NEXT:   dpct::atomic_compare_exchange_strong<sycl::access::address_space::generic_space>(pi, i1, i2);
 // ATOMICCAS-NEXT:   dpct::atomic_compare_exchange_strong<sycl::access::address_space::generic_space>(pu, u1, u2);
 // ATOMICCAS-NEXT:   dpct::atomic_compare_exchange_strong<sycl::access::address_space::generic_space>(pull, ull1, ull2);
+// ATOMICCAS-NEXT:   dpct::atomic_compare_exchange_strong<sycl::access::address_space::generic_space>(pus, us1, us2);
 
 // RUN: dpct --cuda-include-path="%cuda-path/include" --query-api-mapping=atomicAnd_system | FileCheck %s -check-prefix=ATOMICAND_SYSTEM
 // ATOMICAND_SYSTEM: CUDA API:
