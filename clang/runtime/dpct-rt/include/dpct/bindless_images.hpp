@@ -11,6 +11,19 @@
 
 namespace dpct {
 namespace experimental {
+namespace detail {
+inline sycl::ext::oneapi::experimental::image_type
+get_image_type(unsigned type) {
+  switch (type) {
+  case 1:
+    return sycl::ext::oneapi::experimental::array;
+  case 0x10:
+    return sycl::ext::oneapi::experimental::mipmap;
+  default:
+    return sycl::ext::oneapi::experimental::standard;
+  }
+}
+} // namespace detail
 
 #ifdef SYCL_EXT_ONEAPI_BINDLESS_IMAGES
 
@@ -24,19 +37,24 @@ public:
   /// memory.
   template <int dimensions = 3>
   image_mem_wrapper(image_channel channel, sycl::range<dimensions> range,
-                    sycl::ext::oneapi::experimental::image_type type =
-                        sycl::ext::oneapi::experimental::image_type::standard,
-                    unsigned int num_levels = 1)
-      : _channel(channel),
-        _desc(sycl::ext::oneapi::experimental::image_descriptor(
+                    unsigned type, unsigned int num_levels = 1)
+      : _channel(channel) {
+    auto image_type = get_image_type(type);
+    unsigned array_size = 1;
+    if (image_type == sycl::ext::oneapi::experimental::array) {
+      assert(dimensions == 3);
+      array_size = range[2];
+      range[2] = 0;
+    }
+    _desc = sycl::ext::oneapi::experimental::image_descriptor(
 #if (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20240527)
-            range, _channel.get_channel_order(), _channel.get_channel_type(),
-            type, num_levels
+        range, _channel.get_channel_order(), _channel.get_channel_type(),
+        image_type, num_levels, array_size
 #endif
-            )) {
+    );
     auto q = get_default_queue();
     _handle = alloc_image_mem(_desc, q);
-    if (type == sycl::ext::oneapi::experimental::image_type::mipmap) {
+    if (image_type == sycl::ext::oneapi::experimental::image_type::mipmap) {
       assert(num_levels > 1);
       _sub_wrappers = (image_mem_wrapper *)std::malloc(
           sizeof(image_mem_wrapper) * num_levels);
@@ -53,8 +71,8 @@ public:
   /// \param [in] height The height of bindless image memory.
   /// \param [in] depth The depth of bindless image memory.
   image_mem_wrapper(image_channel channel, size_t width, size_t height = 0,
-                    size_t depth = 0)
-      : image_mem_wrapper(channel, {width, height, depth}) {}
+                    size_t depth = 0, unsigned type = 0)
+      : image_mem_wrapper(channel, {width, height, depth}, type) {}
   image_mem_wrapper(const image_mem_wrapper &) = delete;
   image_mem_wrapper &operator=(const image_mem_wrapper &) = delete;
   /// Destroy bindless image memory wrapper.
@@ -100,7 +118,7 @@ private:
       : _channel(channel), _desc(desc), _handle(handle) {}
 
   const image_channel _channel;
-  const sycl::ext::oneapi::experimental::image_descriptor _desc;
+  sycl::ext::oneapi::experimental::image_descriptor _desc;
   sycl::ext::oneapi::experimental::image_mem_handle _handle;
   image_mem_wrapper *_sub_wrappers{nullptr};
 };

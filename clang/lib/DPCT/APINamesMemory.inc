@@ -190,10 +190,7 @@ CONDITIONAL_FACTORY_ENTRY(
     ASSIGNABLE_FACTORY(ASSIGN_FACTORY_ENTRY(
         "cudaMallocMipmappedArray", DEREF(makeCallArgCreatorWithCall(0)),
         NEW(MapNames::getDpctNamespace() + "experimental::image_mem_wrapper",
-            DEREF(1), ARG(2),
-            LITERAL(MapNames::getClNamespace() +
-                    "ext::oneapi::experimental::image_type::mipmap"),
-            ARG(3)))),
+            DEREF(1), ARG(2), LITERAL("0x10"), ARG(3)))),
     REMOVE_API_FACTORY_ENTRY_WITH_MSG("cudaMallocMipmappedArray",
                                       MipmapNeedBindlessImage))
 

@@ -4136,6 +4136,12 @@ std::unordered_map<std::string, MacroMigrationRule> MapNames::MacroRuleMap{
     {"cudaEventDefault",
      MacroMigrationRule("dpct_build_in_macro_rule", RulePriority::Fallback,
                         "cudaEventDefault", "0")},
+    {"cudaArrayDefault",
+     MacroMigrationRule("dpct_build_in_macro_rule", RulePriority::Fallback,
+                        "cudaArrayDefault", "0")},
+    {"cudaArrayLayered",
+     MacroMigrationRule("dpct_build_in_macro_rule", RulePriority::Fallback,
+                        "cudaArrayLayered", "1")},
     //...
 };
 

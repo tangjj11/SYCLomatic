@@ -10234,7 +10234,12 @@ void MemoryMigrationRule::mallocMigration(
       OS << " = new " << MapNames::getDpctNamespace()
          << "experimental::image_mem_wrapper(";
       DerefExpr(C->getArg(1), C).print(OS);
-      OS << ", " << ExprAnalysis::ref(C->getArg(2)) << ")";
+      OS << ", " << ExprAnalysis::ref(C->getArg(2)) << ", ";
+      if (C->getArg(3)->isDefaultArgument())
+        OS << "0";
+      else
+        OS << ExprAnalysis::ref(C->getArg(3));
+      OS << ")";
       return emplaceTransformation(new ReplaceStmt(C, Replacement));
     }
     mallocArrayMigration(C, Name, 3, *Result.SourceManager);
@@ -10247,7 +10252,10 @@ void MemoryMigrationRule::mallocMigration(
          << "experimental::image_mem_wrapper(";
       DerefExpr(C->getArg(1), C).print(OS);
       OS << ", " << ExprAnalysis::ref(C->getArg(2)) << ", "
-         << ExprAnalysis::ref(C->getArg(3)) << ")";
+         << ExprAnalysis::ref(C->getArg(3));
+      if (!C->getArg(4)->isDefaultArgument())
+        OS << ", " << ExprAnalysis::ref(C->getArg(4));
+      OS << ")";
       return emplaceTransformation(new ReplaceStmt(C, Replacement));
     }
     mallocArrayMigration(C, Name, 4, *Result.SourceManager);
@@ -13162,6 +13170,8 @@ void TextureRule::registerMatcher(MatchFinder &MF) {
                            hasParent(callExpr().bind("callExpr")))
           .bind("unresolvedLookupExpr"),
       this);
+
+  MF.addMatcher(integerLiteral().bind("tjj"), this);
 }
 
 bool TextureRule::removeExtraMemberAccess(const MemberExpr *ME) {
@@ -13531,6 +13541,17 @@ void TextureRule::runRule(const MatchFinder::MatchResult &Result) {
                   "ext::oneapi::experimental::sampled_image_handle"
             : MapNames::getDpctNamespace() + "image_wrapper_base_p"));
     requestFeature(HelperFeatureEnum::device_ext);
+  } else if (auto IL = getAssistNodeAsType<IntegerLiteral>(Result, "tjj")) {
+    StringRef OriginTypeStr2 = Lexer::getSourceText(
+        Lexer::getAsCharRange(IL->getSourceRange(),
+                              DpctGlobalInfo::getSourceManager(),
+                              LangOptions()),
+        DpctGlobalInfo::getSourceManager(), LangOptions());
+    if (OriginTypeStr2 == "cudaArrayLayered") {
+      emplaceTransformation(
+          new ReplaceText(IL->getBeginLoc(), IL->getEndLoc(),
+                          std::to_string(IL->getValue().getZExtValue())));
+    }
   }
 }
 
